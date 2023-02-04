@@ -1,0 +1,3 @@
+
+class CurrencyParseError(Exception):
+    pass
