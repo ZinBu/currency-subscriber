@@ -1,5 +1,8 @@
 
-build:
+create_env:
+	cat .env.template > .env
+
+build: create_env
 	docker-compose build
 
 run: build

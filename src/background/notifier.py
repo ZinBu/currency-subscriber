@@ -1,6 +1,6 @@
 import asyncio
 
-from structs.schemas.currency import Action
+from structs.schemas.actions import Action
 from managers import connection_manager
 from structs.choices import AllActions
 
