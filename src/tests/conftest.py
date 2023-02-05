@@ -40,7 +40,7 @@ async def prepare_db() -> typing.Coroutine:
 async def client() -> AsyncClient:
     async with AsyncClient(
         app=app,
-        base_url='http://localhost:8000',
+        base_url='http://localhost:8080',
         headers={'Content-Type': 'application/json'}
     ) as client:
         yield client

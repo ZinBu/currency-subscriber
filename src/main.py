@@ -3,8 +3,9 @@ import logging
 
 from fastapi import FastAPI
 
-from app_routes.api import ws
+from app_routes import client, ws
 from background.currency import currency_updater
+from background.notifier import background_subscribers_notifier
 from database.init_db_data import init_data_in_db
 from settings import settings
 from database.db import init_db
@@ -18,6 +19,7 @@ app = FastAPI(
 )
 
 app.include_router(ws.router)
+app.include_router(client.router)
 
 
 @app.on_event('startup')
@@ -27,3 +29,4 @@ async def startup_event() -> None:
     await init_data_in_db()
     logger.info('Start background task.')
     asyncio.create_task(currency_updater())
+    asyncio.create_task(background_subscribers_notifier())

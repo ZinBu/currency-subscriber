@@ -7,4 +7,4 @@ async def currency_updater():
     """Update currencies every 1 second"""
     while True:
         await update_currencies()
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.7)

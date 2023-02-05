@@ -3,10 +3,12 @@ import json
 
 import httpx
 
+from structs.schemas.currency import Point
 from database.models.currency import CurrencyHistory
+from managers import currency_manager
 from proccessing import exceptions
 from .structs import FxcmItem, FxcmItemList
-from .utils import get_required_pairs_symbols_map, update_pairs
+from .utils import get_required_pairs_symbols_map, update_currency_history
 
 CURRENCY_URL = 'https://ratesjson.fxcm.com/DataDisplayer'
 TIMEOUT_S = 2.
@@ -18,16 +20,12 @@ _POSTFIX = ');\n'
 async def update() -> None:
     dtn, currencies = await _request_currencies()
     required_pairs_symbols_map = await get_required_pairs_symbols_map()
-    filtered_and_instanced_currencies = [
-        CurrencyHistory(
-            value=item.value,
-            timestamp=dtn,
-            currency_id=required_pairs_symbols_map[item.symbol]
-        )
-        for item in currencies
-        if item.symbol in required_pairs_symbols_map
-    ]
-    await update_pairs(filtered_and_instanced_currencies)
+    filtered_and_instanced_currencies = _update_currency_manager_and_get_history_objects(
+        dtn,
+        currencies,
+        required_pairs_symbols_map,
+    )
+    await update_currency_history(filtered_and_instanced_currencies)
 
 
 async def _request_currencies() -> tuple[datetime.datetime, list[FxcmItem]]:
@@ -42,3 +40,29 @@ def _parse_javascript_response(text: str) -> list[FxcmItem]:
         return FxcmItemList(**json.loads(text[len(_PREFIX):-len(_POSTFIX)])).Rates
 
     raise exceptions.CurrencyParseError()
+
+
+def _update_currency_manager_and_get_history_objects(
+        dtn: datetime.datetime,
+        currencies: list[FxcmItem],
+        required_pairs_symbols_map: dict[str, int]
+) -> list[CurrencyHistory]:
+    filtered_and_instanced_currencies = []
+    for item in currencies:
+        if item.symbol in required_pairs_symbols_map:
+            filtered_and_instanced_currencies.append(
+                CurrencyHistory(
+                    value=item.value,
+                    timestamp=dtn,
+                    currency_id=required_pairs_symbols_map[item.symbol]
+                )
+            )
+            currency_manager.set_or_update_currency_point(
+                Point(
+                    assetName=item.symbol,
+                    time=dtn,
+                    assetId=required_pairs_symbols_map[item.symbol],
+                    value=item.value,
+                )
+            )
+    return filtered_and_instanced_currencies

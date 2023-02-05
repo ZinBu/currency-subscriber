@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app_routes.wrappers import object_existence_required
 from database.db import SQLModel
 
 
@@ -24,7 +23,6 @@ class BaseOrmCrudTool(ABC):
         result = await self._db_session.execute(select(self.model))
         return typing.cast(list, result.scalars().all())
 
-    @object_existence_required
     async def retrieve(self, obj_id: int) -> Optional[SQLModel]:
         return await self._db_session.get(self.model, obj_id)
 
@@ -43,22 +41,12 @@ class BaseOrmCrudTool(ABC):
         self._db_session.add_all(model_objects)
         await self._db_session.commit()
 
-    @object_existence_required
     async def update(self, obj_id: int, obj: Union[dict, BaseModel]) -> Optional[SQLModel]:
         update_construction = update(self.model).where(self.model.id == obj_id).values(**self._extract_model(obj))
         await self._db_session.execute(update_construction)
         await self._db_session.commit()
         updated_result = await self._db_session.execute(select(self.model).where(self.model.id == obj_id))
         return updated_result.scalars().first()
-
-    @object_existence_required
-    async def delete(self, obj_id: int) -> bool:
-        model_object = await self.retrieve(obj_id)
-        if not model_object:
-            return False
-        await self._db_session.delete(model_object)
-        await self._db_session.commit()
-        return True
 
     @staticmethod
     def _extract_model(obj: Union[dict, BaseModel]) -> dict:

@@ -2,7 +2,7 @@ from pydantic import Field
 
 from decimal import Decimal
 
-from app_routes.schemas.base import BasePydanticModel
+from structs.schemas.base import BasePydanticModel
 
 
 class FxcmItem(BasePydanticModel):
