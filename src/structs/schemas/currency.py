@@ -5,15 +5,6 @@ from pydantic import Field, validator
 from structs.schemas.base import BasePydanticModel
 
 
-class Action(BasePydanticModel):
-    action: str
-    message: dict
-
-    @property
-    def asset_id(self):
-        return self.message['assetId']
-
-
 class AssetItem(BasePydanticModel):
     id: int
     name: str = Field(alias='symbol')

@@ -8,6 +8,7 @@ from structs.subscriber import Subscriber
 
 @dataclasses.dataclass
 class CurrencyManager:
+    # TODO Cache system should be here (like redis or memcached) if we are going to scale system.
     actual_currencies: dict[int, Point] = dataclasses.field(default_factory=dict)
 
     def set_or_update_currency_point(self, point: Point) -> None:

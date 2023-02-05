@@ -1,19 +1,9 @@
 import typing
 
 import pytest
-from httpx import AsyncClient
 
 from database.db import engine, SQLModel
-from main import app
-
-
-class TestRunningError(Exception):
-    pass
-
-
-# TODO resolve pre_init for test base
-# if 'test' not in engine.url.database.lower():
-#     raise TestRunningError(f'Not relevant database: {engine.url.database}')
+from database.init_db_data import init_data_in_db
 
 
 # Set async test runner
@@ -28,19 +18,8 @@ async def create_new_test_db():
         await conn.run_sync(SQLModel.metadata.create_all)
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 async def prepare_db() -> typing.Coroutine:
-    # await create_new_test_db()
-    # yield
-    return create_new_test_db()
-
-
-# Make requests in our tests
-@pytest.fixture
-async def client() -> AsyncClient:
-    async with AsyncClient(
-        app=app,
-        base_url='http://localhost:8080',
-        headers={'Content-Type': 'application/json'}
-    ) as client:
-        yield client
+    await create_new_test_db()
+    await init_data_in_db()
+    yield

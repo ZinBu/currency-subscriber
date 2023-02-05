@@ -6,7 +6,7 @@ import httpx
 from structs.schemas.currency import Point
 from database.models.currency import CurrencyHistory
 from managers import currency_manager
-from proccessing import exceptions
+from processing import exceptions
 from .structs import FxcmItem, FxcmItemList
 from .utils import get_required_pairs_symbols_map, update_currency_history
 
@@ -14,7 +14,7 @@ CURRENCY_URL = 'https://ratesjson.fxcm.com/DataDisplayer'
 TIMEOUT_S = 2.
 
 _PREFIX = 'null('
-_POSTFIX = ');\n'
+_POSTFIX = ');'
 
 
 async def update() -> None:
@@ -30,12 +30,20 @@ async def update() -> None:
 
 async def _request_currencies() -> tuple[datetime.datetime, list[FxcmItem]]:
     dtn = datetime.datetime.utcnow()
-    async with httpx.AsyncClient() as client:
-        response = await client.get(CURRENCY_URL, timeout=TIMEOUT_S)
+    response = await _request_currencies_data()
     return dtn, _parse_javascript_response(response.text)
 
 
+async def _request_currencies_data() -> httpx.Response:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(CURRENCY_URL, timeout=TIMEOUT_S)
+        response.raise_for_status()
+        return response
+
+
 def _parse_javascript_response(text: str) -> list[FxcmItem]:
+    """Probably, here could be better to avoid serialization and return the raw data"""
+    text = text.strip()
     if text.startswith(_PREFIX) and text.endswith(_POSTFIX):
         return FxcmItemList(**json.loads(text[len(_PREFIX):-len(_POSTFIX)])).Rates
 
