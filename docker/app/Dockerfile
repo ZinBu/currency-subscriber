@@ -4,12 +4,14 @@ WORKDIR /app
 
 ENV PYTHONPATH="/app/src:${PYTHONPATH}"
 
-RUN pip install --upgrade pip setuptools
+RUN pip install --upgrade pip && pip install --upgrade setuptools && pip install pipenv
 
-COPY requirements.txt ./requirements.txt
+COPY Pipfile Pipfile.lock ./
 
-RUN pip install -r ./requirements.txt --no-cache-dir
+RUN pipenv install --system --ignore-pipfile
 
-COPY . /app
+COPY src/ .
+
+EXPOSE 80
 
 CMD gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:80
